@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>GIABAO Pro Tool - Sunwin Edition</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body, html {
+            width: 100%; height: 100%; overflow: hidden;
+            background: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+        #gameFrame {
+            width: 100%; height: 100%; border: none;
+            position: absolute; top: 0; left: 0; z-index: 1;
+        }
+
+        #txTopRightMenuWrapper {
+            position: fixed; top: 12px; right: 12px; z-index: 99999999;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+        }
+        .tx-menu-btn {
+            width: 38px; height: 38px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1.5px solid #475569; border-radius: 50%;
+            color: #38bdf8; font-size: 20px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; backdrop-filter: blur(8px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            transition: all 0.2s ease; user-select: none;
+            text-shadow: 0 0 8px #38bdf8;
+        }
+        .tx-menu-btn:hover { transform: scale(1.05); border-color: #38bdf8; }
+        .tx-dropdown-menu {
+            position: absolute; top: 46px; right: 0; width: 195px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1.5px solid #334155;
+            border-radius: 12px; backdrop-filter: blur(10px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+            display: none; flex-direction: column; overflow: hidden;
+        }
+        .tx-dropdown-menu.show { display: flex; }
+        .tx-menu-item {
+            padding: 10px 12px; color: #ffffff; font-size: 12px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: background 0.2s;
+        }
+        .tx-menu-item:last-child { border-bottom: none; }
+        .tx-menu-item:hover { background: rgba(56, 189, 248, 0.15); color: #38bdf8; text-shadow: 0 0 6px #38bdf8; }
+        .tx-menu-item.danger-item:hover { background: rgba(244, 63, 94, 0.2); color: #f43f5e; text-shadow: 0 0 6px #f43f5e; }
+
+        @keyframes greenBlink {
+            0% { opacity: 1; text-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
+            50% { opacity: 0.2; text-shadow: 0 0 2px #22c55e; }
+            100% { opacity: 1; text-shadow: 0 0 10px #22c55e, 0 0 20px #22c55e; }
+        }
+
+        .tool-ui-box {
+            position: fixed; top: 0px; left: 0px; z-index: 99999998;
+            display: flex; align-items: center; gap: 8px;
+            touch-action: none; will-change: transform; transform-origin: center center;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+            user-select: none;
+        }
+        .tool-ui-box .robot-wrapper {
+            width: 85px; height: 85px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; cursor: grab;
+        }
+        .tool-ui-box .robot-wrapper:active { cursor: grabbing; }
+        .tool-ui-box .robot-img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        .tool-ui-box .info-card {
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border-radius: 10px; padding: 6px 8px; min-width: 205px;
+            display: flex; flex-direction: column; gap: 3.5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            transition: max-height 0.3s ease, padding 0.3s ease;
+        }
+        .tool-ui-box.tx-theme .info-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid #334155;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 10px rgba(56, 189, 248, 0.15);
+        }
+        .tool-ui-box.sicbo-theme .info-card {
+            background: rgba(24, 15, 30, 0.85);
+            border: 2px solid #701a75;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 10px rgba(236, 72, 153, 0.15);
+        }
+        .tool-ui-box .info-header {
+            font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 2px; margin-bottom: 1px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: grab;
+        }
+        .tool-ui-box.tx-theme .info-header { color: #38bdf8; }
+        .tool-ui-box.sicbo-theme .info-header { color: #f472b6; }
+        .tool-ui-box .info-header:active { cursor: grabbing; }
+
+        .online-blink { color: #22c55e; font-weight: 800; font-size: 9px; animation: greenBlink 1.2s infinite ease-in-out; }
+        .header-controls { display: flex; align-items: center; gap: 6px; }
+        .ctrl-btn {
+            cursor: pointer; font-size: 11px; font-weight: 900;
+            color: #cbd5e1; opacity: 0.8; transition: all 0.2s;
+            line-height: 1; padding: 0 2px;
+        }
+        .ctrl-btn:hover { opacity: 1; color: #ffffff; transform: scale(1.2); }
+        .ctrl-close:hover { color: #f43f5e; }
+
+        .info-body { display: flex; flex-direction: column; gap: 3.5px; overflow: hidden; transition: all 0.3s ease; }
+        .tool-ui-box.minimized .info-body { display: none; }
+
+        .info-line {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 11.5px; font-weight: 700; color: #ffffff;
+            line-height: 1.25; text-shadow: 0 0 4px rgba(255, 255, 255, 0.6);
+            flex-wrap: wrap;
+        }
+        .label { color: #cbd5e1; white-space: nowrap; text-shadow: 0 0 4px rgba(203, 213, 225, 0.5); }
+        .val-session { color: #ffffff; font-weight: 800; text-shadow: 0 0 6px #ffffff, 0 0 12px #38bdf8; }
+        .val-pred { color: #ffffff; font-weight: 800; text-shadow: 0 0 6px #ffffff; }
+        .val-pred.green { color: #22c55e !important; text-shadow: 0 0 8px #22c55e, 0 0 16px #22c55e !important; }
+        .val-pred.pink { color: #f43f5e !important; text-shadow: 0 0 8px #f43f5e, 0 0 16px #f43f5e !important; }
+        .val-conf { color: #38bdf8; font-weight: 800; text-shadow: 0 0 6px #38bdf8, 0 0 12px #38bdf8; }
+
+        .val-vi-container { display: inline-flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+        .dice-sq {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 18px; height: 18px;
+            border: 1px solid #38bdf8; border-radius: 4px;
+            background: rgba(15, 23, 42, 0.5); color: #f8fafc;
+            font-weight: 800; font-size: 11px; text-shadow: 0 0 5px #00f0ff;
+            box-shadow: 0 0 5px rgba(56, 189, 248, 0.4);
+        }
+        .dice-sq.sicbo-dice { border-color: #f472b6; box-shadow: 0 0 5px rgba(236, 72, 153, 0.4); }
+        .val-result-text {
+            color: #facc15; font-size: 11.5px; font-weight: 800; margin-left: 2px;
+            text-shadow: 0 0 6px #facc15, 0 0 12px #facc15;
+        }
+        .val-admin-container { display: inline-flex; align-items: center; gap: 3px; }
+        .val-admin-name { color: #ffffff; font-weight: 800; font-size: 11.5px; text-shadow: 0 0 6px #38bdf8, 0 0 12px #38bdf8; }
+        .tiktok-badge { width: 13px; height: 13px; vertical-align: middle; }
+
+        .prev-result-text { color: #94a3b8; font-size: 10px; font-weight: 600; }
+        .prev-result-text .highlight { color: #facc15; font-weight: 800; }
+
+        .vi-pred-badge {
+            display: inline-block;
+            padding: 0 4px; margin-left: 2px;
+            background: rgba(244, 114, 182, 0.15);
+            border: 1px solid #f472b6;
+            border-radius: 4px;
+            color: #f9a8d4; font-size: 10px; font-weight: 700;
+            text-shadow: 0 0 4px rgba(244, 114, 182, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <iframe id="gameFrame" src="http://web.sunwin.career" sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+    <script>
+        (function() {
+            'use strict';
+            const ROBOT1_IMG_SRC = "https://i.ibb.co/kgH7nhLL/robot.gif";
+            const ROBOT2_IMG_SRC = "https://i.ibb.co/kgH7nhLL/robot.gif";
+
+            // ====== CẤU HÌNH API ======
+            // TX: Dùng API mới (tự nhận diện domain Render)
+            // Sicbo: Giữ nguyên API cũ
+            const API_CONFIG = {
+                tx: window.location.origin + "/api/sunwin/dudoan",
+                sicbo: "https://sicsunn-878uuibbuus.onrender.com/api/sicbo/sunwin"
+            };
+
+            const globalConfig = { scaleIndex: 0, rotationAngle: 0 };
+
+            const stateTX = {
+                targetSession: '', prediction: 'Đang khởi động...',
+                viDetail: `<span class="dice-sq">-</span><span class="dice-sq">-</span><span class="dice-sq">-</span> <span class="val-result-text">--</span>`,
+                confidence: '', predClass: 'val-pred', prevSession: '', prevResult: '',
+                lastSessionNum: null, updateTransformFn: null
+            };
+            const stateSicbo = {
+                targetSession: '', prediction: 'Đang khởi động...', viDetail: '',
+                confidence: '', predClass: 'val-pred', prevSession: '', prevResult: '',
+                lastSessionNum: null, updateTransformFn: null
+            };
+
+            function createTopRightMenu() {
+                const menuWrapper = document.createElement('div');
+                menuWrapper.id = 'txTopRightMenuWrapper';
+                menuWrapper.innerHTML = `
+                    <div class="tx-menu-btn" id="txMenuBtn" title="Menu Tool">☰</div>
+                    <div class="tx-dropdown-menu" id="txDropdownMenu">
+                        <div class="tx-menu-item" id="menuReload">Load lại 2 Tool</div>
+                        <div class="tx-menu-item" id="menuScale">Kích cỡ: <span id="scaleLabelVal">Nhỏ (100%)</span></div>
+                        <div class="tx-menu-item" id="menuRotate">Xoay Tool</div>
+                        <div class="tx-menu-item" id="menuToggleTX">Ẩn/Hiện Tool Tài Xỉu</div>
+                        <div class="tx-menu-item" id="menuToggleSicbo">Ẩn/Hiện Tool Sicbo</div>
+                    </div>
+                `;
+                document.body.appendChild(menuWrapper);
+
+                const btn = menuWrapper.querySelector('#txMenuBtn');
+                const dropdown = menuWrapper.querySelector('#txDropdownMenu');
+
+                btn.onclick = (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); };
+                document.addEventListener('click', () => dropdown.classList.remove('show'));
+
+                menuWrapper.querySelector('#menuReload').onclick = () => { triggerReloadTX(); triggerReloadSicbo(); };
+                menuWrapper.querySelector('#menuScale').onclick = () => {
+                    const scaleOptions = [1, 1.2, 1.4];
+                    const scaleLabels = ["Nhỏ (100%)", "Vừa (120%)", "Lớn (140%)"];
+                    globalConfig.scaleIndex = (globalConfig.scaleIndex + 1) % scaleOptions.length;
+                    document.getElementById('scaleLabelVal').innerText = scaleLabels[globalConfig.scaleIndex];
+                    if (stateTX.updateTransformFn) stateTX.updateTransformFn();
+                    if (stateSicbo.updateTransformFn) stateSicbo.updateTransformFn();
+                };
+                menuWrapper.querySelector('#menuRotate').onclick = () => {
+                    globalConfig.rotationAngle = (globalConfig.rotationAngle + 90) % 360;
+                    if (stateTX.updateTransformFn) stateTX.updateTransformFn();
+                    if (stateSicbo.updateTransformFn) stateSicbo.updateTransformFn();
+                };
+                menuWrapper.querySelector('#menuToggleTX').onclick = () => toggleTool('TX');
+                menuWrapper.querySelector('#menuToggleSicbo').onclick = () => toggleTool('Sicbo');
+            }
+
+            function toggleTool(type) {
+                const el = document.getElementById(`txToolUI_${type}`);
+                if (el) el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+            }
+
+            function createRobotUI(type, titleLabel, initialX, initialY, imgSrc) {
+                const elementId = `txToolUI_${type}`;
+                const container = document.createElement('div');
+                container.id = elementId;
+                container.className = `tool-ui-box ${type === 'TX' ? 'tx-theme' : 'sicbo-theme'}`;
+
+                let infoBodyHTML;
+                if (type === 'TX') {
+                    infoBodyHTML = `
+                        <div class="info-body">
+                            <div class="info-line">
+                                <span class="label">Phiên dự đoán:</span>
+                                <span id="${type}_targetSession" class="val-session">#--</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Dự Đoán:</span>
+                                <span id="${type}_investmentCmd" class="val-pred">Đang khởi động...</span>
+                                <span id="${type}_probability" class="val-conf"></span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Xúc xắc:</span>
+                                <div id="${type}_viDetail" class="val-vi-container"><span class="dice-sq">-</span><span class="dice-sq">-</span><span class="dice-sq">-</span> <span class="val-result-text">--</span></div>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Phiên trước:</span>
+                                <span id="${type}_prevSession" class="prev-result-text">#---</span>
+                                <span id="${type}_prevResult" class="prev-result-text">---</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">ADMIN:</span>
+                                <div class="val-admin-container">
+                                    <span class="val-admin-name" id="${type}_adminName">@cskhgiabao</span>
+                                    <svg class="tiktok-badge" viewBox="0 0 24 24" fill="none"><path d="M10 16.2L5.8 12L7.21 10.59L10 13.37L16.79 6.58L18.2 8L10 16.2Z" fill="white"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    infoBodyHTML = `
+                        <div class="info-body">
+                            <div class="info-line">
+                                <span class="label">Phiên dự đoán:</span>
+                                <span id="${type}_targetSession" class="val-session">#--</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Dự Đoán:</span>
+                                <span id="${type}_investmentCmd" class="val-pred">Đang khởi động...</span>
+                                <span id="${type}_probability" class="val-conf"></span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Xúc xắc:</span>
+                                <div id="${type}_viDetail" class="val-vi-container"><span class="dice-sq sicbo-dice">-</span><span class="dice-sq sicbo-dice">-</span><span class="dice-sq sicbo-dice">-</span> <span class="val-result-text">--</span></div>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Dự đoán Vị:</span>
+                                <span id="${type}_viPrediction" class="vi-pred-badge">---</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">Phiên trước:</span>
+                                <span id="${type}_prevSession" class="prev-result-text">#---</span>
+                                <span id="${type}_prevResult" class="prev-result-text">---</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="label">ADMIN:</span>
+                                <div class="val-admin-container">
+                                    <span class="val-admin-name" id="${type}_adminName">@cskhgiabao</span>
+                                    <svg class="tiktok-badge" viewBox="0 0 24 24" fill="none"><path d="M10 16.2L5.8 12L7.21 10.59L10 13.37L16.79 6.58L18.2 8L10 16.2Z" fill="white"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = `
+                    <div class="robot-wrapper" id="${type}_dragHandle">
+                        <img src="${imgSrc}" class="robot-img" alt="Robot AI">
+                    </div>
+                    <div class="info-card">
+                        <div class="info-header" id="${type}_headerHandle">
+                            <span>${titleLabel} <span class="online-blink">● ONLINE</span></span>
+                            <div class="header-controls">
+                                <span class="ctrl-btn ctrl-min" id="${type}_minBtn">−</span>
+                                <span class="ctrl-btn ctrl-close" id="${type}_closeBtn">✕</span>
+                            </div>
+                        </div>
+                        ${infoBodyHTML}
+                    </div>
+                `;
+                document.body.appendChild(container);
+
+                const dragHandle = container.querySelector(`#${type}_dragHandle`);
+                const headerHandle = container.querySelector(`#${type}_headerHandle`);
+                const minBtn = container.querySelector(`#${type}_minBtn`);
+                const closeBtn = container.querySelector(`#${type}_closeBtn`);
+
+                const updateTransformFn = makeDraggableGPU(container, [dragHandle, headerHandle], initialX, initialY);
+                updateTransformFn();
+
+                if (type === 'TX') stateTX.updateTransformFn = updateTransformFn;
+                else stateSicbo.updateTransformFn = updateTransformFn;
+
+                minBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    container.classList.toggle('minimized');
+                    minBtn.innerText = container.classList.contains('minimized') ? '+' : '−';
+                };
+                closeBtn.onclick = (e) => { e.stopPropagation(); toggleTool(type); };
+            }
+
+            function makeDraggableGPU(element, handles, initX, initY) {
+                let isDragging = false;
+                let startX = 0, startY = 0;
+                let currentX = initX, currentY = initY;
+                let targetX = initX, targetY = initY;
+                let vx = 0, vy = 0;
+                let lastClientX = 0, lastClientY = 0;
+                let lastTime = 0;
+                let animId = null;
+
+                function getBounds() {
+                    const rect = element.getBoundingClientRect();
+                    const scaleOptions = [1, 1.2, 1.4];
+                    const scale = scaleOptions[globalConfig.scaleIndex] || 1;
+                    const w = (rect.width || 270) / scale;
+                    const h = (rect.height || 95) / scale;
+                    const maxX = Math.max(0, window.innerWidth - w * scale);
+                    const maxY = Math.max(0, window.innerHeight - h * scale);
+                    return { maxX, maxY };
+                }
+
+                function applyTransform() {
+                    const scaleOptions = [1, 1.2, 1.4];
+                    const scale = scaleOptions[globalConfig.scaleIndex];
+                    element.style.transform = `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0) rotate(${globalConfig.rotationAngle}deg) scale(${scale})`;
+                }
+
+                function updatePos() {
+                    const lerpFactor = 0.25;
+                    if (isDragging) {
+                        currentX += (targetX - currentX) * lerpFactor;
+                        currentY += (targetY - currentY) * lerpFactor;
+                    } else {
+                        if (Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1) {
+                            targetX += vx; targetY += vy;
+                            vx *= 0.90; vy *= 0.90;
+                            const { maxX, maxY } = getBounds();
+                            if (targetX < 0) { targetX = 0; vx = -vx * 0.4; }
+                            if (targetX > maxX) { targetX = maxX; vx = -vx * 0.4; }
+                            if (targetY < 0) { targetY = 0; vy = -vy * 0.4; }
+                            if (targetY > maxY) { targetY = maxY; vy = -vy * 0.4; }
+                        }
+                        currentX += (targetX - currentX) * lerpFactor;
+                        currentY += (targetY - currentY) * lerpFactor;
+                    }
+                    applyTransform();
+                    const isMoving = Math.abs(targetX - currentX) > 0.05 || Math.abs(targetY - currentY) > 0.05 || Math.abs(vx) > 0.1 || Math.abs(vy) > 0.1;
+                    if (isDragging || isMoving) {
+                        animId = requestAnimationFrame(updatePos);
+                    } else {
+                        currentX = targetX; currentY = targetY;
+                        applyTransform();
+                        animId = null;
+                    }
+                }
+
+                handles.forEach(handle => {
+                    if (!handle) return;
+                    handle.addEventListener('pointerdown', (e) => {
+                        if (e.target.classList.contains('ctrl-btn')) return;
+                        e.preventDefault();
+                        isDragging = true; vx = 0; vy = 0;
+                        lastClientX = e.clientX; lastClientY = e.clientY;
+                        lastTime = performance.now();
+                        try { handle.setPointerCapture(e.pointerId); } catch(err) {}
+                        startX = e.clientX - targetX;
+                        startY = e.clientY - targetY;
+                        if (!animId) animId = requestAnimationFrame(updatePos);
+                    });
+                    handle.addEventListener('pointermove', (e) => {
+                        if (!isDragging) return;
+                        const now = performance.now();
+                        const dt = Math.max(1, now - lastTime);
+                        vx = ((e.clientX - lastClientX) / dt) * 14;
+                        vy = ((e.clientY - lastClientY) / dt) * 14;
+                        lastClientX = e.clientX; lastClientY = e.clientY; lastTime = now;
+                        const { maxX, maxY } = getBounds();
+                        targetX = Math.max(0, Math.min(e.clientX - startX, maxX));
+                        targetY = Math.max(0, Math.min(e.clientY - startY, maxY));
+                    });
+                    const stop = (e) => {
+                        if (isDragging) {
+                            isDragging = false;
+                            try { handle.releasePointerCapture(e.pointerId); } catch(err) {}
+                        }
+                    };
+                    handle.addEventListener('pointerup', stop);
+                    handle.addEventListener('pointercancel', stop);
+                });
+
+                window.addEventListener('resize', () => {
+                    const { maxX, maxY } = getBounds();
+                    targetX = Math.max(0, Math.min(targetX, maxX));
+                    targetY = Math.max(0, Math.min(targetY, maxY));
+                    if (!animId) animId = requestAnimationFrame(updatePos);
+                });
+
+                return applyTransform;
+            }
+            function renderTX() {
+                document.getElementById('TX_targetSession').innerText = stateTX.targetSession ? `#${stateTX.targetSession}` : '#--';
+                const cmd = document.getElementById('TX_investmentCmd');
+                cmd.innerText = stateTX.prediction;
+                cmd.className = stateTX.predClass;
+                document.getElementById('TX_viDetail').innerHTML = stateTX.viDetail;
+                document.getElementById('TX_probability').innerText = stateTX.confidence ? ` : ${stateTX.confidence}` : '';
+                document.getElementById('TX_prevSession').innerText = stateTX.prevSession ? `#${stateTX.prevSession}` : '#---';
+                document.getElementById('TX_prevResult').innerHTML = stateTX.prevResult || '---';
+            }
+
+            function renderSicbo() {
+                document.getElementById('Sicbo_targetSession').innerText = stateSicbo.targetSession ? `#${stateSicbo.targetSession}` : '#--';
+                const cmd = document.getElementById('Sicbo_investmentCmd');
+                cmd.innerText = stateSicbo.prediction;
+                cmd.className = stateSicbo.predClass;
+                document.getElementById('Sicbo_viDetail').innerHTML = stateSicbo.viDetail;
+                document.getElementById('Sicbo_probability').innerText = stateSicbo.confidence ? ` : ${stateSicbo.confidence}` : '';
+                document.getElementById('Sicbo_prevSession').innerText = stateSicbo.prevSession ? `#${stateSicbo.prevSession}` : '#---';
+                document.getElementById('Sicbo_prevResult').innerHTML = stateSicbo.prevResult || '---';
+                const viPredEl = document.getElementById('Sicbo_viPrediction');
+                if (viPredEl) viPredEl.innerText = stateSicbo.viPrediction || '---';
+            }
+
+            // ============================================================
+            // 🔥 TX — DÙNG API MỚI TỪ sun.js (/api/sunwin/dudoan)
+            // ============================================================
+            function processTX(json) {
+                try {
+                    if (!json || json.success === false) return;
+
+                    const sessionNum = parseInt(json.phien_hien_tai);
+                    if (!sessionNum || stateTX.lastSessionNum === sessionNum) return;
+                    stateTX.lastSessionNum = sessionNum;
+
+                    const dice = Array.isArray(json.xuc_xac) ? json.xuc_xac : [0, 0, 0];
+                    const d1 = parseInt(dice[0]) || 0;
+                    const d2 = parseInt(dice[1]) || 0;
+                    const d3 = parseInt(dice[2]) || 0;
+                    const sum = parseInt(json.tong) || (d1 + d2 + d3);
+
+                    let pred = json.du_doan || 'TÀI';
+                    pred = pred.toString().toUpperCase();
+                    if (pred !== 'TÀI' && pred !== 'XỈU') {
+                        pred = pred.includes('TÀI') ? 'TÀI' : 'XỈU';
+                    }
+
+                    const confidence = json.do_tin_cay || '';
+                    const prevResult = json.ket_qua || '';
+                    const prevResultDisplay = prevResult ? `<span class="highlight">${prevResult.toUpperCase()}</span>` : '---';
+                    const prevSession = json.phien_truoc || '';
+
+                    stateTX.targetSession = `${sessionNum}`;
+                    stateTX.prediction = pred;
+                    stateTX.predClass = pred === 'TÀI' ? 'val-pred green' : 'val-pred pink';
+                    stateTX.confidence = confidence;
+                    stateTX.viDetail = `<span class="dice-sq">${d1||'-'}</span><span class="dice-sq">${d2||'-'}</span><span class="dice-sq">${d3||'-'}</span> <span class="val-result-text">${sum}</span>`;
+                    stateTX.prevSession = prevSession;
+                    stateTX.prevResult = prevResultDisplay;
+
+                    if (json.admin) {
+                        const adminEl = document.getElementById('TX_adminName');
+                        if (adminEl) adminEl.innerText = json.admin;
+                    }
+                    renderTX();
+                } catch(e) {
+                    console.error('processTX error:', e);
+                }
+            }
+
+            // ============================================================
+            // 🔒 SICBO — GIỮ NGUYÊN 100% TỪ FILE GỐC
+            // ============================================================
+            function processSicbo(json) {
+                try {
+                    if (!json) return;
+
+                    const sessionNum = parseInt(json.phien_hien_tai);
+                    if (!sessionNum || stateSicbo.lastSessionNum === sessionNum) return;
+                    stateSicbo.lastSessionNum = sessionNum;
+
+                    const dice1 = parseInt(json.xuc_xac1) || 0;
+                    const dice2 = parseInt(json.xuc_xac2) || 0;
+                    const dice3 = parseInt(json.xuc_xac3) || 0;
+                    const sum = parseInt(json.tong) || 0;
+
+                    let pred = json.du_doan || 'TÀI';
+                    pred = pred.toString().toUpperCase();
+                    if (pred !== 'TÀI' && pred !== 'XỈU') {
+                        if (parseInt(pred) >= 11) pred = 'TÀI';
+                        else if (parseInt(pred) <= 10) pred = 'XỈU';
+                        else pred = 'TÀI';
+                    }
+
+                    let confidence = json.do_tin_cay || '0%';
+                    let viPred = json.du_doan_vi || '---';
+
+                    const prevSession = json.phien_truoc || '';
+                    const prevResult = json.ket_qua || '';
+                    const prevResultDisplay = prevResult ? `<span class="highlight">${prevResult.toUpperCase()}</span>` : '---';
+
+                    stateSicbo.targetSession = `${sessionNum}`;
+                    stateSicbo.prediction = pred;
+                    stateSicbo.predClass = pred === 'TÀI' ? 'val-pred green' : 'val-pred pink';
+                    stateSicbo.confidence = confidence;
+                    stateSicbo.viDetail = `<span class="dice-sq sicbo-dice">${dice1}</span><span class="dice-sq sicbo-dice">${dice2}</span><span class="dice-sq sicbo-dice">${dice3}</span> <span class="val-result-text">${sum}</span>`;
+                    stateSicbo.prevSession = prevSession;
+                    stateSicbo.prevResult = prevResultDisplay;
+                    stateSicbo.viPrediction = viPred;
+
+                    if (json.id) {
+                        const adminEl = document.getElementById('Sicbo_adminName');
+                        if (adminEl) adminEl.innerText = json.id;
+                    }
+                    renderSicbo();
+                } catch(e) {
+                    console.error('processSicbo error:', e);
+                }
+            }
+
+            async function fetchAPI(url, callback) {
+                try {
+                    const res = await fetch(url + "?t=" + Date.now(), {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        callback(data);
+                    } else {
+                        console.warn('API response not OK:', res.status, url);
+                    }
+                } catch(e) {
+                    console.warn('fetchAPI error:', e, url);
+                }
+            }
+
+            function triggerReloadTX() { if (API_CONFIG.tx) fetchAPI(API_CONFIG.tx, processTX); }
+            function triggerReloadSicbo() { fetchAPI(API_CONFIG.sicbo, processSicbo); }
+
+            function startApp() {
+                createRobotUI('TX', 'TÀI XỈU SUN', 20, 50, ROBOT1_IMG_SRC);
+                createRobotUI('Sicbo', 'SICBO SUN', 20, 185, ROBOT2_IMG_SRC);
+                createTopRightMenu();
+
+                setInterval(() => {
+                    if (API_CONFIG.tx) fetchAPI(API_CONFIG.tx, processTX);
+                    fetchAPI(API_CONFIG.sicbo, processSicbo);
+                }, 2000);
+
+                triggerReloadTX();
+                triggerReloadSicbo();
+            }
+
+            startApp();
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "sun-prediction",
+  "version": "2.0.0",
+  "description": "Sun Tài Xỉu Prediction API - @cskhgiabao",
+  "main": "sun.js",
+  "scripts": {
+    "start": "node sun.js",
+    "dev": "node sun.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "sunwin",
+    "taixiu",
+    "prediction",
+    "cskhgiabao"
+  ],
+  "author": "@cskhgiabao",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "express": "^4.18.2"
+  }
+}
